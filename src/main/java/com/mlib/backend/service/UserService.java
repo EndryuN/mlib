@@ -1,17 +1,13 @@
-// src/main/java/com/mlib/backend/service/UserService.java
 package com.mlib.backend.service;
 
-import com.mlib.backend.dto.LoginResponse;
+import com.mlib.backend.config.JwtUtil;
 import com.mlib.backend.model.User;
 import com.mlib.backend.repository.UserRepository;
-import com.mlib.backend.config.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -23,10 +19,7 @@ public class UserService {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    private JwtUtil jwtUtil; // Ensure this is injected
 
     /**
      * Register a new user
@@ -50,20 +43,16 @@ public class UserService {
     /**
      * Login and return JWT token
      */
-    public LoginResponse login(String username, String password) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, password)
-        );
+    public String login(String username, String password) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (authentication.isAuthenticated()) {
-            String token = jwtUtil.generateToken(username);
-
-            User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-            return new LoginResponse(token, username, user.getEmail());
+        // Validate password
+        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+            throw new RuntimeException("Invalid credentials");
         }
 
-        throw new RuntimeException("Invalid credentials");
+        // Generate JWT token
+        return jwtUtil.generateToken(username);
     }
 }

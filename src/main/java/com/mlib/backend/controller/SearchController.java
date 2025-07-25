@@ -1,16 +1,16 @@
 // src/main/java/com/mlib/backend/controller/SearchController.java
 package com.mlib.backend.controller;
 
+import com.mlib.backend.dto.ArtistDto;
+import com.mlib.backend.dto.SongDto;
 import com.mlib.backend.model.Artist;
 import com.mlib.backend.model.Song;
 import com.mlib.backend.repository.ArtistRepository;
 import com.mlib.backend.repository.SongRepository;
+import com.mlib.backend.service.SearchService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -24,21 +24,29 @@ public class SearchController {
     @Autowired
     private SongRepository songRepository;
 
+    @Autowired
+    private SearchService searchService;
+
     /**
      * Search artists by name or alias
      */
     @GetMapping("/artists")
-    public ResponseEntity<List<Artist>> searchArtists(@RequestParam String q) {
-        List<Artist> results = artistRepository.searchArtists(q);
-        return ResponseEntity.ok(results);
+    public ResponseEntity<List<ArtistDto>> searchArtists(@RequestParam String q) {
+        return ResponseEntity.ok(searchService.searchArtists(q));
     }
 
-    /**
-     * Search songs by name or featured artists
-     */
     @GetMapping("/songs")
-    public ResponseEntity<List<Song>> searchSongs(@RequestParam String q) {
-        List<Song> results = songRepository.searchSongs(q);
-        return ResponseEntity.ok(results);
+    public ResponseEntity<List<SongDto>> searchSongs(@RequestParam String q) {
+        return ResponseEntity.ok(searchService.searchSongs(q));
+    }
+
+    @GetMapping("/songs/language/{lang}")
+    public ResponseEntity<List<SongDto>> filterByLanguage(@PathVariable String lang) {
+        return ResponseEntity.ok(searchService.filterByLanguage(lang));
+    }
+
+    @GetMapping("/songs/status")
+    public ResponseEntity<List<SongDto>> filterByStatus(@RequestParam List<String> statuses) {
+        return ResponseEntity.ok(searchService.filterByReleaseStatus(statuses));
     }
 }

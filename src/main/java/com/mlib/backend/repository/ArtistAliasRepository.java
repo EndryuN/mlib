@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface ArtistAliasRepository extends JpaRepository<ArtistAlias, Integer> {
     List<ArtistAlias> findByArtistId(Integer artistId);
+    List<ArtistAlias> findByArtistIdIn(List<Integer> artistIds);
 }

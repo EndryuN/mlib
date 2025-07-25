@@ -4,14 +4,13 @@ import com.mlib.backend.model.User;
 import com.mlib.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 
 @Service
-public class MlibUserDetailsService implements UserDetailsService {
+public class MlibUserDetailsService implements org.springframework.security.core.userdetails.UserDetailsService {
 
     @Autowired
     private UserRepository userRepository;
@@ -24,7 +23,7 @@ public class MlibUserDetailsService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPasswordHash(),
-                Collections.emptyList() // You can add roles later
+                Collections.emptyList()
         );
     }
 }
