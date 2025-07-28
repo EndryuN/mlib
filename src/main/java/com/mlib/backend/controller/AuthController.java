@@ -1,6 +1,7 @@
 package com.mlib.backend.controller;
 
 import com.mlib.backend.dto.LoginRequest;
+import com.mlib.backend.dto.LoginResponse;
 import com.mlib.backend.dto.RegisterRequest;
 import com.mlib.backend.service.UserService;
 import jakarta.validation.Valid;
@@ -34,11 +35,12 @@ public class AuthController {
      * Login and return JWT token
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         try {
-            return ResponseEntity.ok(userService.login(request.getUsername(), request.getPassword()));
+            LoginResponse response = userService.login(request.getUsername(), request.getPassword());
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(401).body(null);
         }
     }
 }

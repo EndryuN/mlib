@@ -44,10 +44,20 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.disable()) // Enable and configure later if needed
+                .cors(cors -> cors
+                        .configurationSource(request -> {
+                            var configuration = new org.springframework.web.cors.CorsConfiguration();
+                            configuration.setAllowedOrigins(java.util.List.of("http://localhost:5173")); // Your Vite frontend
+                            configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                            configuration.setAllowedHeaders(java.util.List.of("*"));
+                            configuration.setAllowCredentials(true); // Important for cookies/auth tokens
+                            return configuration;
+                        })
+                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/**")
+                        .permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);

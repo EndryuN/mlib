@@ -72,12 +72,8 @@ public class SearchService {
                                 AliasDto ad = new AliasDto();
                                 ad.setAliasId(alias.getAliasId());
                                 ad.setAliasName(alias.getAliasName());
-                                ad.setAliasType(alias.getAliasType());
-                                ad.setLocale(alias.getLocale());
-                                ad.setPrimaryAlias(alias.getPrimaryAlias());
                                 return ad;
                             })
-                            .sorted(Comparator.comparing(a -> !Boolean.TRUE.equals(a.getPrimaryAlias())))
                             .collect(Collectors.toList());
 
                     dto.setAliases(aliasDtos);

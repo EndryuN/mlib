@@ -1,6 +1,7 @@
 package com.mlib.backend.service;
 
 import com.mlib.backend.config.JwtUtil;
+import com.mlib.backend.dto.LoginResponse;
 import com.mlib.backend.model.User;
 import com.mlib.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +44,7 @@ public class UserService {
     /**
      * Login and return JWT token
      */
-    public String login(String username, String password) {
+    public LoginResponse login(String username, String password) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -53,6 +54,9 @@ public class UserService {
         }
 
         // Generate JWT token
-        return jwtUtil.generateToken(username);
+        String token = jwtUtil.generateToken(username);
+
+        // ✅ Return structured response with token + user info
+        return new LoginResponse(token, user.getUsername(), user.getEmail());
     }
 }
