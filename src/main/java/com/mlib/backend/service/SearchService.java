@@ -42,32 +42,59 @@ public class SearchService {
             return Collections.emptyList();
         }
 
-        List<Artist> artists = artistRepository.searchArtists(query.trim());
-        Map<Integer, List<ArtistAlias>> aliasMap = new HashMap<>();
+        String trimmedQuery = query.trim();
 
-        // Fetch aliases for all matched artists
-        List<Integer> artistIds = artists.stream()
+        // Step 1: Find all artists matching name OR alias
+        List<Artist> allArtists = artistRepository.searchArtists(trimmedQuery);
+
+        if (allArtists.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Step 2: Extract all unique artistIds to fetch their aliases
+        List<Integer> artistIds = allArtists.stream()
                 .map(Artist::getArtistId)
                 .toList();
 
-        if (!artistIds.isEmpty()) {
-            List<ArtistAlias> aliases = artistAliasRepository.findByArtistIdIn(artistIds);
-            aliasMap = aliases.stream()
-                    .collect(Collectors.groupingBy(ArtistAlias::getArtistId));
-        }
+        // Step 3: Fetch all aliases for these artists
+        List<ArtistAlias> allAliases = artistIds.isEmpty() ?
+                Collections.emptyList() :
+                artistAliasRepository.findByArtistIdIn(artistIds);
 
-        Map<Integer, List<ArtistAlias>> finalAliasMap = aliasMap;
-        return artists.stream()
-                .map(artist -> {
+        // Group aliases by artistId
+        Map<Integer, List<ArtistAlias>> aliasMap = allAliases.stream()
+                .collect(Collectors.groupingBy(ArtistAlias::getArtistId));
+
+        // Step 4: Group artists by artistUri
+        Map<String, List<Artist>> artistsByUri = allArtists.stream()
+                .filter(a -> a.getArtistUri() != null)
+                .collect(Collectors.groupingBy(Artist::getArtistUri));
+
+        // Step 5: Build one ArtistDto per artistUri
+        return artistsByUri.entrySet().stream()
+                .map(entry -> {
+                    String artistUri = entry.getKey();
+                    List<Artist> duplicates = entry.getValue();
+
+                    // Pick the "best" representative artist (e.g. verified first)
+                    Artist representative = duplicates.stream()
+                            .max(Comparator.comparing(a -> a.getVerifiedCheck() != null && a.getVerifiedCheck()))
+                            .orElse(duplicates.get(0));
+
+                    // Gather all unique aliases across all duplicates
+                    Set<ArtistAlias> combinedAliases = duplicates.stream()
+                            .flatMap(d -> aliasMap.getOrDefault(d.getArtistId(), Collections.emptyList()).stream())
+                            .collect(Collectors.toCollection(LinkedHashSet::new)); // preserve order
+
+                    // Convert to DTO
                     ArtistDto dto = new ArtistDto();
-                    dto.setArtistId(artist.getArtistId());
-                    dto.setArtistName(artist.getArtistName());
-                    dto.setArtistUri(artist.getArtistUri());
-                    dto.setVerifiedCheck(artist.getVerifiedCheck());
+                    dto.setArtistId(representative.getArtistId());  // representative ID
+                    dto.setArtistName(representative.getArtistName());
+                    dto.setArtistUri(artistUri);
+                    dto.setVerifiedCheck(representative.getVerifiedCheck());
 
-                    List<AliasDto> aliasDtos = Optional.ofNullable(finalAliasMap.get(artist.getArtistId()))
-                            .orElse(Collections.emptyList())
-                            .stream()
+                    // Attach all aliases from all duplicates
+                    List<AliasDto> aliasDtos = combinedAliases.stream()
                             .map(alias -> {
                                 AliasDto ad = new AliasDto();
                                 ad.setAliasId(alias.getAliasId());
@@ -79,6 +106,7 @@ public class SearchService {
                     dto.setAliases(aliasDtos);
                     return dto;
                 })
+                .sorted(Comparator.comparing(dto -> dto.getArtistName())) // optional: sort by name
                 .collect(Collectors.toList());
     }
 
