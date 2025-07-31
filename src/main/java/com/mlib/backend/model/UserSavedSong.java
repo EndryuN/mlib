@@ -1,33 +1,44 @@
 package com.mlib.backend.model;
 
 import jakarta.persistence.*;
-import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Objects;
+import java.io.Serializable;
 
 @Entity
 @Table(name = "user_saved_song")
 public class UserSavedSong implements Serializable {
+
     @EmbeddedId
     private UserSavedSongId id;
 
     @Column(name = "added_at")
     private LocalDateTime addedAt;
 
-    // Many-to-One relationships
+    // Many-to-One: User
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("userId")
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", referencedColumnName = "user_id", insertable = false, updatable = false)
     private User user;
 
+    // Many-to-One: Song
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("songId")
-    @JoinColumn(name = "song_id")
+    @JoinColumn(name = "song_id", referencedColumnName = "song_id", insertable = false, updatable = false)
     private Song song;
 
-    // Constructors, getters, setters
-    public UserSavedSong() {}
+    // Constructors
+    public UserSavedSong() {
+        this.addedAt = LocalDateTime.now();
+    }
 
+    public UserSavedSong(User user, Song song) {
+        this();
+        this.user = user;
+        this.song = song;
+        this.id = new UserSavedSongId(user.getUserId(), song.getSongId());
+    }
+
+    // Getters and Setters
     public UserSavedSongId getId() {
         return id;
     }
@@ -59,51 +70,26 @@ public class UserSavedSong implements Serializable {
     public void setSong(Song song) {
         this.song = song;
     }
-}
 
-// Composite primary key class
-@Embeddable
-class UserSavedSongId implements Serializable {
-    @Column(name = "user_id")
-    private Long userId;
-
-    @Column(name = "song_id")
-    private Long songId;
-
-    // Constructors, getters, setters
-    public UserSavedSongId() {}
-
-    public UserSavedSongId(Long userId, Long songId) {
-        this.userId = userId;
-        this.songId = songId;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public Long getSongId() {
-        return songId;
-    }
-
-    public void setSongId(Long songId) {
-        this.songId = songId;
-    }
-
+    // equals(), hashCode(), toString()
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof UserSavedSongId)) return false;
-        UserSavedSongId that = (UserSavedSongId) o;
-        return userId.equals(that.userId) && songId.equals(that.songId);
+        if (!(o instanceof UserSavedSong)) return false;
+        UserSavedSong that = (UserSavedSong) o;
+        return id != null && id.equals(that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(userId, songId);
+        return id != null ? id.hashCode() : super.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "UserSavedSong{" +
+                "id=" + id +
+                ", addedAt=" + addedAt +
+                '}';
     }
 }

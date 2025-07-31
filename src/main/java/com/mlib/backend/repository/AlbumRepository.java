@@ -11,7 +11,6 @@ import java.util.List;
 @Repository
 public interface AlbumRepository extends JpaRepository<Album, Integer> {
 
-    // ✅ Custom query because primary key is 'albumId', not 'id'
     @Query("SELECT a FROM Album a WHERE a.albumId IN :albumIds")
     List<Album> findByIdIn(@Param("albumIds") List<Integer> albumIds);
 }

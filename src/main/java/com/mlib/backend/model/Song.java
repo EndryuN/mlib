@@ -1,14 +1,17 @@
 package com.mlib.backend.model;
 
 import jakarta.persistence.*;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.Data;
 
 @Entity
-@Table(name = "Song")
+@Table(name = "song")  // lowercase for consistency
 @Data
 public class Song {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "song_id")
     private Integer songId;
 
     @Column(name = "song_name", nullable = false)
@@ -43,4 +46,6 @@ public class Song {
 
     @Column(name = "release_status")
     private String releaseStatus;
+
+    // No need for getters/setters — handled by @Data
 }

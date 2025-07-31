@@ -17,7 +17,16 @@ public interface ArtistRepository extends JpaRepository<Artist, Integer> {
             "WHERE a.artistName ILIKE %:query% OR aa.aliasName ILIKE %:query%")
     List<Artist> searchArtists(@Param("query") String query);
 
-    // ✅ Custom query for findByIdIn
+    // Find artists by artistUri (for deduplication)
+    List<Artist> findByArtistUri(@Param("artistUri") String artistUri);
+
+    // Check if an artist exists with the given artistUri
+    @Query("SELECT COUNT(a) > 0 FROM Artist a WHERE a.artistUri = :artistUri")
+    boolean existsByArtistUri(@Param("artistUri") String artistUri);
+
+    // Custom query for findByIdIn
     @Query("SELECT a FROM Artist a WHERE a.artistId IN :artistIds")
     List<Artist> findByIdIn(@Param("artistIds") List<Integer> artistIds);
+
+    List<Artist> findByArtistUriIn(List<String> artistUris);
 }
